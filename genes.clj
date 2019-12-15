@@ -1,4 +1,4 @@
-;; GENES.cl
+;; GENES.clj
 
 ;; GENE: pair of function and number of free parameters it accepts. That is,
 ;; parameters on top of the main flow of data, parameters which can be mutated
@@ -21,4 +21,4 @@
   (iter 'organism x))
 
 (eval-organism organism 4)
-;; genes.cl ends here
+;; genes.clj ends here

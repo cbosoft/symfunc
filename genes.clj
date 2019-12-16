@@ -1,42 +1,52 @@
 ;; GENES.clj
 
-;; GENE: pair of function and number of free parameters it accepts. That is,
-;; parameters on top of the main flow of data, parameters which can be mutated
-;; as part of the optimisation.
+;; GENE: a functional block, represented using clojure's record.
+(defrecord Gene [
+                 doc          ;; [String] A user readable string giving a concise description 
+                              ;; of the gene
 
-;; GENOME: a list of genes
+                 function     ;; [IFn] The function the gene executes: normally an anonymous 
+                              ;; function, but any function that accepts two or more inputs is 
+                              ;; valid.
 
-(defrecord Gene [function name])
+                 default-arg  ;; [Number] the value of the default argument to the function.
+
+                 can-tree     ;; [String]
+
+                 ;; when FUNCTION is executed, ARG is first param to func, followed by the value(s).
+                 ])
+
+;; GENOME: a list of genes.
 (def genome [
-             (->Gene + "add")
-             (->Gene - "subtract")
-             (->Gene * "multiply")
-             (->Gene / "divide")
+             (->Gene "add" + 1 true)
+             (->Gene "value minus arg" (fn [arg value] (- value arg)) 1 false)
+             (->Gene "arg minus value" (fn [arg & values] (apply - arg values)) 1 true)
+             (->Gene "mutiply" * 2 true)
+             (->Gene "value divide by arg" (fn [arg value] (/ value arg)) 1 false)
+             (->Gene "arg divide by value" (fn [arg & values] (apply / arg values)) 1 true)
              ])
 
-;;(println ((:function (first genome)) 1 2))
+(def ^:dynamic input-value)
 
-;;;; ;; ORGANISM: a collection of genes working together
-(def an-organism '((get genome 1)))
 
-(defn try-organism [organism input]
-  ;; function to run organism on input
-  (cond ((record? organism) (println "is record"))
-        (1 (println "else"))))
 
-(try-organism (get genome 1) 8)
+;; ORGANISM: a collection of genes working together -> a FUNCTION
 
-;;;; (print "here")
-;;;; 
-;;;; (defn eval-organism [organism x]
-;;;;   (defn iter [l xi]
-;;;;     (print l)
-;;;;     (if (not (rest l)) 
-;;;;       (eval (pop (pop l)) xi (pop (pop (rest l))))
-;;;;       (eval (pop (pop l)) (iter (rest l)) (pop (pop (rest l))))))
-;;;;   (iter 'organism x))
-;;;; 
-;;;; (eval-organism organism 4)
+;; TODO: change so organism is nested list of gene records
+(defn make-organism [indices]
+  (let [gene (get genome (first indices))
+        gene-func [(:function gene) (:default-arg gene)] 
+        rest-indices (rest indices)]
+    (if (empty? rest-indices) (seq (conj gene-func 'input-value))
+      (seq (conj gene-func (make-organism rest-indices))))))
 
+(defn test-organism [organism input]
+  (binding [input-value input]
+    (eval organism)))
+
+;; MUTATION: perturbation of an organisms genes
+(defn mutate-organism [organism]
+  ;; TODO
+  )
 
 ;; genes.clj ends here
